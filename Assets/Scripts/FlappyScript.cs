@@ -9,6 +9,9 @@ public class Birdbird : MonoBehaviour
     public AudioClip FlyAudioClip;
     public AudioClip DeathAudioClip;
     public AudioClip ScoredAudioClip;
+    public AudioClip BGMClip;
+    private AudioSource bgmSource;
+
     public Sprite GetReadySprite;
 
     public float VelocityPerJump = 3f;
@@ -33,8 +36,14 @@ public class Birdbird : MonoBehaviour
     private Vector3 birdRotation = Vector3.zero;
     private bool isInvincible = false;
 
-    void Start() 
-    { 
+    void Start()
+    {
+        AudioSource[] sources = GetComponents<AudioSource>();
+        bgmSource = sources[1];
+        bgmSource.clip = BGMClip;
+        bgmSource.loop = true;
+        bgmSource.playOnAwake = false;  
+
     }
 
     void Update()
@@ -52,6 +61,7 @@ public class Birdbird : MonoBehaviour
                 GameStateManager.GameState = GameState.Playing;
                 IntroGUI.SetActive(false);
                 ScoreManagerScript.Score = 0;
+                bgmSource.Play();
             }
         }
         else if (GameStateManager.GameState == GameState.Playing)
@@ -141,7 +151,7 @@ public class Birdbird : MonoBehaviour
     void OnDeath()
     {
         GetComponent<AudioSource>().PlayOneShot(DeathAudioClip);
-
+        bgmSource.Stop();
         CheckpointManager.GameSnapshot snapshot = default(CheckpointManager.GameSnapshot);
         bool shouldRespawn = (CheckpointManager.Instance != null)
                           && CheckpointManager.Instance.HandleDeath(out snapshot);
@@ -159,7 +169,7 @@ public class Birdbird : MonoBehaviour
     IEnumerator RespawnRoutine(CheckpointManager.GameSnapshot snap)
     {
         GameStateManager.GameState = GameState.Dead;
-
+        bgmSource.Play();
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         rb.linearVelocity = Vector2.zero;
         rb.angularVelocity = 0f;

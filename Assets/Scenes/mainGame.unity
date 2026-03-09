@@ -840,6 +840,7 @@ GameObject:
   - component: {fileID: 703414535}
   - component: {fileID: 703414534}
   - component: {fileID: 703414536}
+  - component: {fileID: 703414537}
   m_Layer: 0
   m_Name: Flappy
   m_TagString: Flappy
@@ -954,6 +955,7 @@ MonoBehaviour:
   FlyAudioClip: {fileID: 8300000, guid: ba2fc418c41bb9547a22c2908432d3bf, type: 3}
   DeathAudioClip: {fileID: 8300000, guid: fe4250c182d35324b8570640076c423d, type: 3}
   ScoredAudioClip: {fileID: 8300000, guid: 6e07426d69e17e54c86f5b9436253f92, type: 3}
+  BGMClip: {fileID: 8300000, guid: c8623284fca71044f9ebd22561ece815, type: 3}
   GetReadySprite: {fileID: 21300020, guid: aab37b51d898f764abaf04d75f0eb322, type: 3}
   VelocityPerJump: 3
   XSpeed: 1
@@ -963,6 +965,7 @@ MonoBehaviour:
   DeathGUI: {fileID: 886260227}
   restartButtonGameCollider: {fileID: 1325426905}
   respawnInvincibilityDuration: 1.5
+  pipePrefabs: []
 --- !u!58 &703414534
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -1123,6 +1126,103 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 0
+--- !u!82 &703414537
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 703414529}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 8300000, guid: c8623284fca71044f9ebd22561ece815, type: 3}
+  m_Resource: {fileID: 8300000, guid: c8623284fca71044f9ebd22561ece815, type: 3}
+  m_PlayOnAwake: 1
+  m_Volume: 0.35
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 199
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &765433179
 GameObject:
   m_ObjectHideFlags: 0
@@ -1532,10 +1632,6 @@ MonoBehaviour:
   timeMax: 2.5
   checkpointFlagPrefab: {fileID: 1808375891970997497, guid: cff8338a4e85f4c49879226f327af2ce,
     type: 3}
-  checkpointDelay: 5
-  flagXOffset: 0
-  flagYMin: -0.3
-  flagYMax: 0.8
 --- !u!4 &906839455
 Transform:
   m_ObjectHideFlags: 0
