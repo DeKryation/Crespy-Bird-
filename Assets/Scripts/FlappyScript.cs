@@ -69,12 +69,12 @@ public class FlappyScript : MonoBehaviour
                 contactPoint = Input.mousePosition;
 
             //check if user wants to restart the game
-            if (restartButtonGameCollider == Physics2D.OverlapPoint
+           /* if (restartButtonGameCollider == Physics2D.OverlapPoint
                 (Camera.main.ScreenToWorldPoint(contactPoint)))
             {
                 GameStateManager.GameState = GameState.Intro;
                 Application.LoadLevel(Application.loadedLevelName);
-            }
+            } */
         }
 
     }
