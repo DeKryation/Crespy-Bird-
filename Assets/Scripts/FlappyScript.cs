@@ -24,7 +24,7 @@ public class Birdbird : MonoBehaviour
     public Collider2D restartButtonGameCollider;
 
     [Header("Respawn")]
-    public float respawnInvincibilityDuration = 1f;
+    public float respawnInvincibilityDuration = 0.5f;
 
     //Pipe prefabs to re-instantiate on restore
     [Header("Pipe Prefabs (for snapshot restore)")]
@@ -147,6 +147,12 @@ public class Birdbird : MonoBehaviour
         if (col.gameObject.CompareTag("Floor")) OnDeath();
     }
 
+    void OnCollisionStay2D(Collision2D col)
+    {
+        if (GameStateManager.GameState != GameState.Playing) return;
+        if (isInvincible) return;
+        if (col.gameObject.CompareTag("Floor")) OnDeath();
+    }
     //Death handling + checkpoing respawn logic.
     void OnDeath()
     {
