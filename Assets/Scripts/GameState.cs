@@ -8,7 +8,8 @@ public enum GameState
 {
     Intro,
     Playing,
-    Dead
+    Dead,
+    Won
 }
 
 public static class GameStateManager
