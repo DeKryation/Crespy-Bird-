@@ -1,35 +1,45 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-/// <summary>
-/// Spritesheet for Flappy Bird found here: http://www.spriters-resource.com/mobile_phone/flappybird/sheet/59537/
-/// Audio for Flappy Bird found here: https://www.sounds-resource.com/mobile/flappybird/sound/5309/
-/// </summary>
-public class FlappyScript : MonoBehaviour
+
+public class Birdbird : MonoBehaviour
 {
 
+    //Audio Clips for actions.
     public AudioClip FlyAudioClip, DeathAudioClip, ScoredAudioClip;
+
+    //prites for actions.
     public Sprite GetReadySprite;
+
+    //Rotation Speed.
     public float RotateUpSpeed = 1, RotateDownSpeed = 1;
+
+    //UI References.
     public GameObject IntroGUI, DeathGUI;
+
+    //Collider for restart button in death screen.
     public Collider2D restartButtonGameCollider;
+
+    //Speed 
     public float VelocityPerJump = 3;
     public float XSpeed = 1;
 
-    // Use this for initialization
     void Start()
     {
 
     }
 
-    FlappyYAxisTravelState flappyYAxisTravelState;
+    //State to see if its flying/falling.
+    YAxisTravelState flappyYAxisTravelState;
 
-    enum FlappyYAxisTravelState
+    enum YAxisTravelState
     {
         GoingUp, GoingDown
     }
 
+    //Store the current rotation.
     Vector3 birdRotation = Vector3.zero;
+
     // Update is called once per frame
     void Update()
     {
@@ -37,32 +47,36 @@ public class FlappyScript : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Escape))
             Application.Quit();
 
+        //Intro State.
         if (GameStateManager.GameState == GameState.Intro)
         {
-            MoveBirdOnXAxis();
-            if (WasTouchedOrClicked())
-            {
-                BoostOnYAxis();
-                GameStateManager.GameState = GameState.Playing;
+            OnXAxis();
+            if (OnTouch()) //If player taps, start the game.
+            { 
+                OnYAxis(); //Make the bird jump.
+                GameStateManager.GameState = GameState.Playing; //Set the state to playing.
+
+                //Hide intro and reset the score.
                 IntroGUI.SetActive(false);
                 ScoreManagerScript.Score = 0;
             }
         }
 
-        else if (GameStateManager.GameState == GameState.Playing)
+        else if (GameStateManager.GameState == GameState.Playing) //Gameplay state is playing.
         {
-            MoveBirdOnXAxis();
-            if (WasTouchedOrClicked())
+            OnXAxis();
+            if (OnTouch()) //Tap to jump.
             {
-                BoostOnYAxis();
+                OnYAxis();
             }
 
         }
 
-        else if (GameStateManager.GameState == GameState.Dead)
+        else if (GameStateManager.GameState == GameState.Dead) //Gameplay state is dead.
         {
             Vector2 contactPoint = Vector2.zero;
 
+            //Detect touch or mouse click.
             if (Input.touchCount > 0)
                 contactPoint = Input.touches[0].position;
             if (Input.GetMouseButtonDown(0))
@@ -82,20 +96,21 @@ public class FlappyScript : MonoBehaviour
 
     void FixedUpdate()
     {
-        //just jump up and down on intro screen
+        //Set the game state to intro.
         if (GameStateManager.GameState == GameState.Intro)
         {
-            if (GetComponent<Rigidbody2D>().linearVelocity.y < -1) //when the speed drops, give a boost
-                GetComponent<Rigidbody2D>().AddForce(new Vector2(0, GetComponent<Rigidbody2D>().mass * 5500 * Time.deltaTime)); //lots of play and stop 
-                                                        //and play and stop etc to find this value, feel free to modify
+            //If the bird falls too fast, apply upward force.
+            if (GetComponent<Rigidbody2D>().linearVelocity.y < -1)
+                GetComponent<Rigidbody2D>().AddForce(new Vector2(0, GetComponent<Rigidbody2D>().mass * 5500 * Time.deltaTime)); 
         }
-        else if (GameStateManager.GameState == GameState.Playing || GameStateManager.GameState == GameState.Dead)
+        else if (GameStateManager.GameState == GameState.Playing || GameStateManager.GameState == GameState.Dead) //Adjust the rotation.
         {
             FixFlappyRotation();
         }
     }
 
-    bool WasTouchedOrClicked()
+    //Detect the player input.
+    bool OnTouch()
     {
         if (Input.GetButtonUp("Jump") || Input.GetMouseButtonDown(0) || 
             (Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Ended))
@@ -104,63 +119,58 @@ public class FlappyScript : MonoBehaviour
             return false;
     }
 
-    void MoveBirdOnXAxis()
+    //Handle horizontal movement.
+    void OnXAxis()
     {
         transform.position += new Vector3(Time.deltaTime * XSpeed, 0, 0);
     }
 
-    void BoostOnYAxis()
+    //Handle jumping movement.
+    void OnYAxis()
     {
         GetComponent<Rigidbody2D>().linearVelocity = new Vector2(0, VelocityPerJump);
         GetComponent<AudioSource>().PlayOneShot(FlyAudioClip);
     }
 
 
-
-    /// <summary>
-    /// when the flappy goes up, it'll rotate up to 45 degrees. when it falls, rotation will be -90 degrees min
-    /// </summary>
+    //Adjust the rotation.
     private void FixFlappyRotation()
     {
-        if (GetComponent<Rigidbody2D>().linearVelocity.y > 0) flappyYAxisTravelState = FlappyYAxisTravelState.GoingUp;
-        else flappyYAxisTravelState = FlappyYAxisTravelState.GoingDown;
+        if (GetComponent<Rigidbody2D>().linearVelocity.y > 0) flappyYAxisTravelState = YAxisTravelState.GoingUp;
+        else flappyYAxisTravelState = YAxisTravelState.GoingDown;
 
         float degreesToAdd = 0;
 
         switch (flappyYAxisTravelState)
         {
-            case FlappyYAxisTravelState.GoingUp:
+            case YAxisTravelState.GoingUp:
                 degreesToAdd = 6 * RotateUpSpeed;
                 break;
-            case FlappyYAxisTravelState.GoingDown:
+            case YAxisTravelState.GoingDown:
                 degreesToAdd = -3 * RotateDownSpeed;
                 break;
             default:
                 break;
         }
-        //solution with negative eulerAngles found here: http://answers.unity3d.com/questions/445191/negative-eular-angles.html
 
-        //clamp the values so that -90<rotation<45 *always*
+        //Clamp the rotation.
         birdRotation = new Vector3(0, 0, Mathf.Clamp(birdRotation.z + degreesToAdd, -90, 45));
         transform.eulerAngles = birdRotation;
     }
 
-    /// <summary>
-    /// check for collision with pipes
-    /// </summary>
-    /// <param name="col"></param>
+    //Detect collision with pipes and floor.
     void OnTriggerEnter2D(Collider2D col)
     {
         if (GameStateManager.GameState == GameState.Playing)
         {
-            if (col.gameObject.tag == "Pipeblank") //pipeblank is an empty gameobject with a collider between the two pipes
+            if (col.gameObject.tag == "Pipeblank") //An empty space between 2 pipes.
             {
                 GetComponent<AudioSource>().PlayOneShot(ScoredAudioClip);
                 ScoreManagerScript.Score++;
             }
             else if (col.gameObject.tag == "Pipe")
             {
-                FlappyDies();
+                onDeath();
             }
         }
     }
@@ -171,12 +181,13 @@ public class FlappyScript : MonoBehaviour
         {
             if (col.gameObject.tag == "Floor")
             {
-                FlappyDies();
+                onDeath();
             }
         }
     }
 
-    void FlappyDies()
+    //Handle death logic.
+    void onDeath()
     {
         GameStateManager.GameState = GameState.Dead;
         DeathGUI.SetActive(true);
