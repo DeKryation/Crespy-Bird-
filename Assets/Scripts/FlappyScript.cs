@@ -38,6 +38,8 @@ public class Birdbird : MonoBehaviour
 
     void Start()
     {
+        GameStateManager.GameState = GameState.Intro; 
+
         AudioSource[] sources = GetComponents<AudioSource>();
         bgmSource = sources[1];
         bgmSource.clip = BGMClip;
@@ -54,6 +56,7 @@ public class Birdbird : MonoBehaviour
         //Input controls
         if (GameStateManager.GameState == GameState.Intro)
         {
+            if (bgmSource.isPlaying) bgmSource.Stop();
             OnXAxis();
             if (OnTouch())
             {
@@ -62,6 +65,8 @@ public class Birdbird : MonoBehaviour
                 IntroGUI.SetActive(false);
                 ScoreManagerScript.Score = 0;
                 bgmSource.Play();
+                Debug.Log("[Birdbird] BGM Play called from: " + System.Environment.StackTrace);
+
             }
         }
         else if (GameStateManager.GameState == GameState.Playing)
@@ -175,7 +180,7 @@ public class Birdbird : MonoBehaviour
     IEnumerator RespawnRoutine(CheckpointManager.GameSnapshot snap)
     {
         GameStateManager.GameState = GameState.Dead;
-        bgmSource.Play();
+       
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         rb.linearVelocity = Vector2.zero;
         rb.angularVelocity = 0f;
@@ -239,6 +244,7 @@ public class Birdbird : MonoBehaviour
 
         //Resume states.
         GameStateManager.GameState = GameState.Playing;
+        bgmSource.Play();
 
         //Invincibility frames so players wont immediately die on respawn.
         isInvincible = true;
