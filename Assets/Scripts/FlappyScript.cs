@@ -1,11 +1,9 @@
-﻿// ============================================================
-//  Birdbird.cs
-//  Restores full game state snapshot on respawn.
-// ============================================================
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+
+//This is the player controller but for bird bird.
 public class Birdbird : MonoBehaviour
 {
     public AudioClip FlyAudioClip;
@@ -23,9 +21,9 @@ public class Birdbird : MonoBehaviour
     public Collider2D restartButtonGameCollider;
 
     [Header("Respawn")]
-    public float respawnInvincibilityDuration = 1.5f;
+    public float respawnInvincibilityDuration = 1f;
 
-    // ── Pipe prefabs to re-instantiate on restore ─────────────
+    //Pipe prefabs to re-instantiate on restore
     [Header("Pipe Prefabs (for snapshot restore)")]
     [Tooltip("Drag all your pipe prefabs here in the SAME ORDER as SpawnObjects on the Spawner.")]
     public GameObject[] pipePrefabs;
@@ -35,12 +33,16 @@ public class Birdbird : MonoBehaviour
     private Vector3 birdRotation = Vector3.zero;
     private bool isInvincible = false;
 
-    void Start() { }
+    void Start() 
+    { 
+    }
 
     void Update()
     {
+        //Exit controls
         if (Input.GetKeyDown(KeyCode.Escape)) Application.Quit();
 
+        //Input controls
         if (GameStateManager.GameState == GameState.Intro)
         {
             OnXAxis();
@@ -61,12 +63,14 @@ public class Birdbird : MonoBehaviour
 
     void FixedUpdate()
     {
+        //During the intro state, applies gentle float.
         if (GameStateManager.GameState == GameState.Intro)
         {
             Rigidbody2D rb = GetComponent<Rigidbody2D>();
             if (rb.linearVelocity.y < -1f)
                 rb.AddForce(new Vector2(0, rb.mass * 5500f * Time.deltaTime));
         }
+        //During the gameplay, applies rotation based on vertical velocity.
         else if (GameStateManager.GameState == GameState.Playing ||
                  GameStateManager.GameState == GameState.Dead)
         {
@@ -74,6 +78,7 @@ public class Birdbird : MonoBehaviour
         }
     }
 
+    //Input detection.
     bool OnTouch()
     {
         return Input.GetButtonUp("Jump")
@@ -81,17 +86,21 @@ public class Birdbird : MonoBehaviour
             || (Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Ended);
     }
 
+    //Hoirzontal movement.
     void OnXAxis()
     {
         transform.position += new Vector3(Time.deltaTime * XSpeed, 0f, 0f);
     }
 
+
+    //Vertical movement
     void OnYAxis()
     {
         GetComponent<Rigidbody2D>().linearVelocity = new Vector2(0f, VelocityPerJump);
         GetComponent<AudioSource>().PlayOneShot(FlyAudioClip);
     }
 
+    //Bird rotation.
     void FixFlappyRotation()
     {
         yState = GetComponent<Rigidbody2D>().linearVelocity.y > 0f
@@ -128,6 +137,7 @@ public class Birdbird : MonoBehaviour
         if (col.gameObject.CompareTag("Floor")) OnDeath();
     }
 
+    //Death handling + checkpoing respawn logic.
     void OnDeath()
     {
         GetComponent<AudioSource>().PlayOneShot(DeathAudioClip);
@@ -145,6 +155,7 @@ public class Birdbird : MonoBehaviour
         }
     }
 
+    //Respawn sequence: destroy pipes, reset score, restore pipes from snapshot, reset player position/physics, invincibility frames.
     IEnumerator RespawnRoutine(CheckpointManager.GameSnapshot snap)
     {
         GameStateManager.GameState = GameState.Dead;
@@ -154,7 +165,7 @@ public class Birdbird : MonoBehaviour
         rb.angularVelocity = 0f;
         rb.gravityScale = 0f;
 
-        // ── 1. Destroy all current pipes ─────────────────────
+        //Remove all pipes.
         HashSet<int> destroyed = new HashSet<int>();
         foreach (GameObject p in GameObject.FindGameObjectsWithTag("Pipe"))
         {
@@ -175,16 +186,15 @@ public class Birdbird : MonoBehaviour
             }
         }
 
-        // Wait one frame for Destroy to flush, then a short visual pause
+        //Wait for 1 frame for the destroy to occur.
         yield return null;
         yield return new WaitForSeconds(0.4f);
 
-        // ── 2. Reset score to 0 ───────────────────────────────
+        //Reset score.
         ScoreManagerScript.Score = 0;
         FindObjectOfType<ScoreManagerScript>()?.RefreshDisplay();
 
-        // ── 3. Re-instantiate pipes from snapshot ─────────────
-        // BUG FIX: the original code destroyed pipes but never put them back.
+        //Reinstantiate pipes from snapshot.
         if (snap.pipes != null && pipePrefabs != null)
         {
             foreach (CheckpointManager.PipeSnapshot ps in snap.pipes)
@@ -199,7 +209,7 @@ public class Birdbird : MonoBehaviour
             Debug.LogWarning("[Birdbird] pipePrefabs is empty – assign pipe prefabs in the Inspector!");
         }
 
-        // ── 4. Restore player position & physics ─────────────
+        // Restore player position and physics
         transform.position = snap.playerPosition;
         birdRotation = Vector3.zero;
         transform.eulerAngles = birdRotation;
@@ -207,14 +217,14 @@ public class Birdbird : MonoBehaviour
         rb.linearVelocity = Vector2.zero;
         rb.angularVelocity = 0f;
 
-        // ── 4b. Reset checkpoint state so player must re-earn the next one ──
+        //reset checkpoint states
         if (CheckpointManager.Instance != null)
             CheckpointManager.Instance.ResetCheckpoints();
 
-        // ── 5. Resume ─────────────────────────────────────────
+        //Resume states.
         GameStateManager.GameState = GameState.Playing;
 
-        // ── 6. Invincibility frames ───────────────────────────
+        //Invincibility frames so players wont immediately die on respawn.
         isInvincible = true;
         yield return new WaitForSeconds(respawnInvincibilityDuration);
         isInvincible = false;

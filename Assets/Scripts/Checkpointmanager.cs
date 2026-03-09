@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using System.Collections.Generic;
 
+//Manage the whole checkpoint system, including saving/restoring snapshots and win conditions.
 public class CheckpointManager : MonoBehaviour
 {
     public static CheckpointManager Instance;
@@ -21,9 +22,7 @@ public class CheckpointManager : MonoBehaviour
     public bool HasCheckpoint { get; private set; }
 
     private float timer = 0f;
-    // BUG FIX: flagWasMissed was never cleared after a successful checkpoint,
-    // meaning one missed flag would permanently lock out respawning.
-    // Now it only blocks respawn if a flag was missed AFTER the last checkpoint.
+
     private bool flagMissedSinceLastCheckpoint = false;
     private int nextFlagID = 0;
     private HashSet<int> collectedFlagIDs = new HashSet<int>();
@@ -31,6 +30,7 @@ public class CheckpointManager : MonoBehaviour
     private GameSnapshot savedSnapshot;
     private bool hasSnapshot = false;
 
+    //Store the state of the single pipe when the checkpoin is saved.
     public struct PipeSnapshot
     {
         public Vector3 position;
@@ -38,6 +38,7 @@ public class CheckpointManager : MonoBehaviour
         public int prefabIndex;   // index into Birdbird.pipePrefabs
     }
 
+    //Store the gaem state.
     public struct GameSnapshot
     {
         public Vector3 playerPosition;
@@ -52,12 +53,16 @@ public class CheckpointManager : MonoBehaviour
         Instance = this;
     }
 
+    //When this script run, reset all checkpoint-related variables to their default states.
     void Start() { ResetCheckpoints(); }
 
     void Update()
     {
+        //Run checkpoint timer during gameplay.
         if (GameStateManager.GameState != GameState.Playing) return;
 
+
+        //If no flag is currently active and the system is not ready to spawn another, continue the grace period.
         if (!FlagIsActive && !ReadyToSpawn)
         {
             timer += Time.deltaTime;
@@ -69,6 +74,7 @@ public class CheckpointManager : MonoBehaviour
         }
     }
 
+    //Flag Management.
     public int GetNextFlagID() { return nextFlagID++; }
 
     public bool IsFlagAlreadyCollected(int id) { return collectedFlagIDs.Contains(id); }
@@ -80,7 +86,7 @@ public class CheckpointManager : MonoBehaviour
         timer = 0f;
     }
 
-    // Called by CheckpointFlag when player touches it.
+    //Checkpoint Saving
     public void SaveCheckpoint(GameObject player, int flagID)
     {
         if (collectedFlagIDs.Contains(flagID)) return;
@@ -88,12 +94,19 @@ public class CheckpointManager : MonoBehaviour
 
         GameSnapshot snap = new GameSnapshot();
 
+        //Save player position.
         snap.playerPosition = player.transform.position;
+
+        //Save score.
         snap.score = ScoreManagerScript.Score;
+
+        //Save flag count.
         snap.flagsCollected = FlagsCollected + 1;
 
-        // Snapshot all pipe roots currently in scene
+        //Snapshot all pipe roots currently in scene
         snap.pipes = new List<PipeSnapshot>();
+
+
         HashSet<int> seenRoots = new HashSet<int>();
         Birdbird bird = player.GetComponent<Birdbird>();
 
@@ -103,7 +116,7 @@ public class CheckpointManager : MonoBehaviour
             if (seenRoots.Contains(root.GetInstanceID())) continue;
             seenRoots.Add(root.GetInstanceID());
 
-            // Match root to a prefab index by name
+            //Match root to a prefab index by name
             int prefabIdx = FindPrefabIndex(root, bird);
             if (prefabIdx < 0) continue;
 
@@ -115,14 +128,16 @@ public class CheckpointManager : MonoBehaviour
             });
         }
 
+        //Store snapshot.
         savedSnapshot = snap;
         hasSnapshot = true;
 
+        //Update checkpoint stats.
         FlagsCollected++;
         HasCheckpoint = true;
         FlagIsActive = false;
 
-        // BUG FIX: clear the missed flag when a new checkpoint is earned
+        //Clear missed flag state.
         flagMissedSinceLastCheckpoint = false;
         timer = 0f;
 
@@ -133,7 +148,7 @@ public class CheckpointManager : MonoBehaviour
             TriggerWin();
     }
 
-    // Attempt to match an instantiated pipe root to a prefab by name prefix.
+    //Pipe identification.
     private int FindPrefabIndex(GameObject root, Birdbird bird)
     {
         if (bird == null || bird.pipePrefabs == null) return -1;
@@ -147,16 +162,16 @@ public class CheckpointManager : MonoBehaviour
         return -1;
     }
 
+    //Missed checkpoint.
     public void OnFlagMissed()
     {
         FlagIsActive = false;
-        // BUG FIX: only set flag missed relative to current checkpoint, not globally
         flagMissedSinceLastCheckpoint = true;
         timer = 0f;
         Debug.Log("[CheckpointManager] Flag missed.");
     }
 
-    // Called by Birdbird on death. Returns true + snapshot if player should respawn.
+    //Called by Birdbird on death. Returns true + snapshot if player should respawn.
     public bool HandleDeath(out GameSnapshot snapshot)
     {
         snapshot = savedSnapshot;
@@ -178,7 +193,6 @@ public class CheckpointManager : MonoBehaviour
         FlagIsActive = false;
         timer = 0f;
         ReadyToSpawn = false;
-        // Do NOT reset flagMissedSinceLastCheckpoint here; it's cleared on SaveCheckpoint.
 
         Debug.Log("[CheckpointManager] Restoring snapshot.");
         return true;
