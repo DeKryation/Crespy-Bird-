@@ -334,7 +334,16 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      matchsticks_0: -3647255818633608841
+      matchsticks_1: 4725814130729858014
+      matchsticks_2: -5258486753586881248
+      matchsticks_3: 7751592992966504844
+      matchsticks_4: -7318703873755690583
+      matchsticks_5: -4220481536993382230
+      matchsticks_6: -726386307537527169
+      matchsticks_7: -7264057951537516247
+      matchsticks_8: 3070151371245019625
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

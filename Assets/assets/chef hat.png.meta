@@ -134,7 +134,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      chef hat_0: -322785874775601917
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
