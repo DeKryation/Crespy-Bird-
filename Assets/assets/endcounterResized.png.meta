@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: c8c375763958f2b4c9469412f4d59d9c
+guid: 2a245bda60f9b82419ad7b5b34de0b10
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -322785874775601917
-    second: chef hat_0
+      213: 7628345165407130850
+    second: endcounterResized_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -113,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: chef hat_0
+      name: endcounterResized_0
       rect:
         serializedVersion: 2
-        x: 30
-        y: 60
-        width: 318
-        height: 564
+        x: 7
+        y: 13
+        width: 186
+        height: 135
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -128,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 30d8c7305fb358bf0800000000000000
-      internalID: -322785874775601917
+      spriteID: 2e41920e2835dd960800000000000000
+      internalID: 7628345165407130850
       vertices: []
       indices: 
       edges: []
