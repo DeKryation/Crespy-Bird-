@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      cheeseResized_0: -8524622736249846119
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
