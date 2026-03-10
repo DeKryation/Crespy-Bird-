@@ -147,7 +147,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      bread_rotated_0: 8963311405462572483
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
