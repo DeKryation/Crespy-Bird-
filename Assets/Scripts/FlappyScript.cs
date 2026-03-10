@@ -1,257 +1,186 @@
 ﻿using UnityEngine;
 using System.Collections;
-using System.Collections.Generic;
 
-
-//This is the player controller but for bird bird.
-public class Birdbird : MonoBehaviour
+/// <summary>
+/// Spritesheet for Flappy Bird found here: http://www.spriters-resource.com/mobile_phone/flappybird/sheet/59537/
+/// Audio for Flappy Bird found here: https://www.sounds-resource.com/mobile/flappybird/sound/5309/
+/// </summary>
+public class FlappyScript : MonoBehaviour
 {
-    public AudioClip FlyAudioClip;
-    public AudioClip DeathAudioClip;
-    public AudioClip ScoredAudioClip;
-    public AudioClip BGMClip;
-    private AudioSource bgmSource;
 
+    public AudioClip FlyAudioClip, DeathAudioClip, ScoredAudioClip;
     public Sprite GetReadySprite;
-
-    public float VelocityPerJump = 3f;
-    public float XSpeed = 1f;
-    public float RotateUpSpeed = 1f;
-    public float RotateDownSpeed = 1f;
-
-    public GameObject IntroGUI;
-    public GameObject DeathGUI;
+    public float RotateUpSpeed = 1, RotateDownSpeed = 1;
+    public GameObject IntroGUI, DeathGUI;
     public Collider2D restartButtonGameCollider;
+    public float VelocityPerJump = 3;
+    public float XSpeed = 1;
 
-    [Header("Respawn")]
-    public float respawnInvincibilityDuration = 0.5f;
-
-    //Pipe prefabs to re-instantiate on restore
-    [Header("Pipe Prefabs (for snapshot restore)")]
-    [Tooltip("Drag all your pipe prefabs here in the SAME ORDER as SpawnObjects on the Spawner.")]
-    public GameObject[] pipePrefabs;
-
-    private enum YAxisTravelState { GoingUp, GoingDown }
-    private YAxisTravelState yState = YAxisTravelState.GoingDown;
-    private Vector3 birdRotation = Vector3.zero;
-    private bool isInvincible = false;
-
+    // Use this for initialization
     void Start()
     {
-        GameStateManager.GameState = GameState.Intro; 
-
-        AudioSource[] sources = GetComponents<AudioSource>();
-        bgmSource = sources[1];
-        bgmSource.clip = BGMClip;
-        bgmSource.loop = true;
-        bgmSource.playOnAwake = false;  
 
     }
 
+    FlappyYAxisTravelState flappyYAxisTravelState;
+
+    enum FlappyYAxisTravelState
+    {
+        GoingUp, GoingDown
+    }
+
+    Vector3 birdRotation = Vector3.zero;
+    // Update is called once per frame
     void Update()
     {
-        //Exit controls
-        if (Input.GetKeyDown(KeyCode.Escape)) Application.Quit();
+        //handle back key in Windows Phone
+        if (Input.GetKeyDown(KeyCode.Escape))
+            Application.Quit();
 
-        //Input controls
         if (GameStateManager.GameState == GameState.Intro)
         {
-            if (bgmSource.isPlaying) bgmSource.Stop();
-            OnXAxis();
-            if (OnTouch())
+            MoveBirdOnXAxis();
+            if (WasTouchedOrClicked())
             {
-                OnYAxis();
+                BoostOnYAxis();
                 GameStateManager.GameState = GameState.Playing;
                 IntroGUI.SetActive(false);
                 ScoreManagerScript.Score = 0;
-                bgmSource.Play();
-                Debug.Log("[Birdbird] BGM Play called from: " + System.Environment.StackTrace);
-
             }
         }
+
         else if (GameStateManager.GameState == GameState.Playing)
         {
-            OnXAxis();
-            if (OnTouch()) OnYAxis();
+            MoveBirdOnXAxis();
+            if (WasTouchedOrClicked())
+            {
+                BoostOnYAxis();
+            }
+
         }
+
+        else if (GameStateManager.GameState == GameState.Dead)
+        {
+            Vector2 contactPoint = Vector2.zero;
+
+            if (Input.touchCount > 0)
+                contactPoint = Input.touches[0].position;
+            if (Input.GetMouseButtonDown(0))
+                contactPoint = Input.mousePosition;
+
+            //check if user wants to restart the game
+           /* if (restartButtonGameCollider == Physics2D.OverlapPoint
+                (Camera.main.ScreenToWorldPoint(contactPoint)))
+            {
+                GameStateManager.GameState = GameState.Intro;
+                Application.LoadLevel(Application.loadedLevelName);
+            } */
+        }
+
     }
+
 
     void FixedUpdate()
     {
-        //During the intro state, applies gentle float.
+        //just jump up and down on intro screen
         if (GameStateManager.GameState == GameState.Intro)
         {
-            Rigidbody2D rb = GetComponent<Rigidbody2D>();
-            if (rb.linearVelocity.y < -1f)
-                rb.AddForce(new Vector2(0, rb.mass * 5500f * Time.deltaTime));
+            if (GetComponent<Rigidbody2D>().linearVelocity.y < -1) //when the speed drops, give a boost
+                GetComponent<Rigidbody2D>().AddForce(new Vector2(0, GetComponent<Rigidbody2D>().mass * 5500 * Time.deltaTime)); //lots of play and stop 
+                                                        //and play and stop etc to find this value, feel free to modify
         }
-        //During the gameplay, applies rotation based on vertical velocity.
-        else if (GameStateManager.GameState == GameState.Playing ||
-                 GameStateManager.GameState == GameState.Dead)
+        else if (GameStateManager.GameState == GameState.Playing || GameStateManager.GameState == GameState.Dead)
         {
             FixFlappyRotation();
         }
     }
 
-    //Input detection.
-    bool OnTouch()
+    bool WasTouchedOrClicked()
     {
-        return Input.GetButtonUp("Jump")
-            || Input.GetMouseButtonDown(0)
-            || (Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Ended);
+        if (Input.GetButtonUp("Jump") || Input.GetMouseButtonDown(0) || 
+            (Input.touchCount > 0 && Input.touches[0].phase == TouchPhase.Ended))
+            return true;
+        else
+            return false;
     }
 
-    //Hoirzontal movement.
-    void OnXAxis()
+    void MoveBirdOnXAxis()
     {
-        transform.position += new Vector3(Time.deltaTime * XSpeed, 0f, 0f);
+        transform.position += new Vector3(Time.deltaTime * XSpeed, 0, 0);
     }
 
-
-    //Vertical movement
-    void OnYAxis()
+    void BoostOnYAxis()
     {
-        GetComponent<Rigidbody2D>().linearVelocity = new Vector2(0f, VelocityPerJump);
+        GetComponent<Rigidbody2D>().linearVelocity = new Vector2(0, VelocityPerJump);
         GetComponent<AudioSource>().PlayOneShot(FlyAudioClip);
     }
 
-    //Bird rotation.
-    void FixFlappyRotation()
+
+
+    /// <summary>
+    /// when the flappy goes up, it'll rotate up to 45 degrees. when it falls, rotation will be -90 degrees min
+    /// </summary>
+    private void FixFlappyRotation()
     {
-        yState = GetComponent<Rigidbody2D>().linearVelocity.y > 0f
-            ? YAxisTravelState.GoingUp : YAxisTravelState.GoingDown;
+        if (GetComponent<Rigidbody2D>().linearVelocity.y > 0) flappyYAxisTravelState = FlappyYAxisTravelState.GoingUp;
+        else flappyYAxisTravelState = FlappyYAxisTravelState.GoingDown;
 
-        float deg = (yState == YAxisTravelState.GoingUp)
-            ? 6f * RotateUpSpeed : -3f * RotateDownSpeed;
+        float degreesToAdd = 0;
 
-        birdRotation = new Vector3(0f, 0f,
-            Mathf.Clamp(birdRotation.z + deg, -90f, 45f));
+        switch (flappyYAxisTravelState)
+        {
+            case FlappyYAxisTravelState.GoingUp:
+                degreesToAdd = 6 * RotateUpSpeed;
+                break;
+            case FlappyYAxisTravelState.GoingDown:
+                degreesToAdd = -3 * RotateDownSpeed;
+                break;
+            default:
+                break;
+        }
+        //solution with negative eulerAngles found here: http://answers.unity3d.com/questions/445191/negative-eular-angles.html
+
+        //clamp the values so that -90<rotation<45 *always*
+        birdRotation = new Vector3(0, 0, Mathf.Clamp(birdRotation.z + degreesToAdd, -90, 45));
         transform.eulerAngles = birdRotation;
     }
 
+    /// <summary>
+    /// check for collision with pipes
+    /// </summary>
+    /// <param name="col"></param>
     void OnTriggerEnter2D(Collider2D col)
     {
-        if (GameStateManager.GameState != GameState.Playing) return;
-        if (isInvincible) return;
-
-        if (col.gameObject.CompareTag("Pipeblank"))
+        if (GameStateManager.GameState == GameState.Playing)
         {
-            GetComponent<AudioSource>().PlayOneShot(ScoredAudioClip);
-            ScoreManagerScript.Score++;
-        }
-        else if (col.gameObject.CompareTag("Pipe"))
-        {
-            OnDeath();
+            if (col.gameObject.tag == "Pipeblank") //pipeblank is an empty gameobject with a collider between the two pipes
+            {
+                GetComponent<AudioSource>().PlayOneShot(ScoredAudioClip);
+                ScoreManagerScript.Score++;
+            }
+            else if (col.gameObject.tag == "Pipe")
+            {
+                FlappyDies();
+            }
         }
     }
 
     void OnCollisionEnter2D(Collision2D col)
     {
-        if (GameStateManager.GameState != GameState.Playing) return;
-        if (isInvincible) return;
-        if (col.gameObject.CompareTag("Floor")) OnDeath();
-    }
-
-    void OnCollisionStay2D(Collision2D col)
-    {
-        if (GameStateManager.GameState != GameState.Playing) return;
-        if (isInvincible) return;
-        if (col.gameObject.CompareTag("Floor")) OnDeath();
-    }
-    //Death handling + checkpoing respawn logic.
-    void OnDeath()
-    {
-        GetComponent<AudioSource>().PlayOneShot(DeathAudioClip);
-        bgmSource.Stop();
-        CheckpointManager.GameSnapshot snapshot = default(CheckpointManager.GameSnapshot);
-        bool shouldRespawn = (CheckpointManager.Instance != null)
-                          && CheckpointManager.Instance.HandleDeath(out snapshot);
-
-        if (shouldRespawn)
-            StartCoroutine(RespawnRoutine(snapshot));
-        else
+        if (GameStateManager.GameState == GameState.Playing)
         {
-            GameStateManager.GameState = GameState.Dead;
-            if (DeathGUI != null) DeathGUI.SetActive(true);
+            if (col.gameObject.tag == "Floor")
+            {
+                FlappyDies();
+            }
         }
     }
 
-    //Respawn sequence: destroy pipes, reset score, restore pipes from snapshot, reset player position/physics, invincibility frames.
-    IEnumerator RespawnRoutine(CheckpointManager.GameSnapshot snap)
+    void FlappyDies()
     {
         GameStateManager.GameState = GameState.Dead;
-       
-        Rigidbody2D rb = GetComponent<Rigidbody2D>();
-        rb.linearVelocity = Vector2.zero;
-        rb.angularVelocity = 0f;
-        rb.gravityScale = 0f;
-
-        //Remove all pipes.
-        HashSet<int> destroyed = new HashSet<int>();
-        foreach (GameObject p in GameObject.FindGameObjectsWithTag("Pipe"))
-        {
-            GameObject root = p.transform.root.gameObject;
-            if (!destroyed.Contains(root.GetInstanceID()))
-            {
-                destroyed.Add(root.GetInstanceID());
-                Destroy(root);
-            }
-        }
-        foreach (GameObject p in GameObject.FindGameObjectsWithTag("Pipeblank"))
-        {
-            GameObject root = p.transform.root.gameObject;
-            if (!destroyed.Contains(root.GetInstanceID()))
-            {
-                destroyed.Add(root.GetInstanceID());
-                Destroy(root);
-            }
-        }
-
-        //Wait for 1 frame for the destroy to occur.
-        yield return null;
-        yield return new WaitForSeconds(0.4f);
-
-        //Reset score.
-        ScoreManagerScript.Score = 0;
-        FindObjectOfType<ScoreManagerScript>()?.RefreshDisplay();
-
-        //Reinstantiate pipes from snapshot.
-        if (snap.pipes != null && pipePrefabs != null)
-        {
-            foreach (CheckpointManager.PipeSnapshot ps in snap.pipes)
-            {
-                if (ps.prefabIndex < 0 || ps.prefabIndex >= pipePrefabs.Length) continue;
-                if (pipePrefabs[ps.prefabIndex] == null) continue;
-                Instantiate(pipePrefabs[ps.prefabIndex], ps.position, ps.rotation);
-            }
-        }
-        else if (pipePrefabs == null || pipePrefabs.Length == 0)
-        {
-            Debug.LogWarning("[Birdbird] pipePrefabs is empty – assign pipe prefabs in the Inspector!");
-        }
-
-        // Restore player position and physics
-        transform.position = snap.playerPosition;
-        birdRotation = Vector3.zero;
-        transform.eulerAngles = birdRotation;
-        rb.gravityScale = 1f;
-        rb.linearVelocity = Vector2.zero;
-        rb.angularVelocity = 0f;
-
-        //reset checkpoint states
-        if (CheckpointManager.Instance != null)
-            CheckpointManager.Instance.ResetCheckpoints();
-
-        //Resume states.
-        GameStateManager.GameState = GameState.Playing;
-        bgmSource.Play();
-
-        //Invincibility frames so players wont immediately die on respawn.
-        isInvincible = true;
-        yield return new WaitForSeconds(respawnInvincibilityDuration);
-        isInvincible = false;
-
-        Debug.Log("[Birdbird] Respawn complete. Score=" + snap.score +
-                  " Pipes restored=" + (snap.pipes != null ? snap.pipes.Count : 0));
+        DeathGUI.SetActive(true);
+        GetComponent<AudioSource>().PlayOneShot(DeathAudioClip);
     }
+
 }
